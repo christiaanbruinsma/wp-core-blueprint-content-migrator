@@ -31,15 +31,23 @@ final class Events {
 			self::TRASHED    => __( 'Content migration source moved to Trash', 'core-blueprint-content-migrator' ),
 		];
 		foreach ( $labels as $id => $label ) {
-			$registry::register( [ 'id' => $id, 'label' => $label, 'retention_category' => 'maintenance' ] );
+			try {
+				$registry::register( [ 'id' => $id, 'label' => $label, 'retention_category' => 'maintenance' ] );
+			} catch ( \Throwable ) {
+				// Governance is best-effort for this standalone utility.
+			}
 		}
 	}
 
 	/** @param array<string,mixed> $context */
-	public static function record( string $event, string $severity, array $context ): void {
+	public static function record( string $event, string $severity, array $context ): bool {
 		if ( ! class_exists( '\\CB\\Core\\Governance\\Audit' ) ) {
-			return;
+			return false;
 		}
-		\CB\Core\Governance\Audit::record( $event, $severity, $context );
+		try {
+			return (bool) \CB\Core\Governance\Audit::record( $event, $severity, $context );
+		} catch ( \Throwable ) {
+			return false;
+		}
 	}
 }
