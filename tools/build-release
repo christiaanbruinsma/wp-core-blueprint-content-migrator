@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PLUGIN_SLUG="core-blueprint-content-migrator"
+ENTRY_FILE="$ROOT_DIR/core-blueprint-content-migrator.php"
+VERSION="$(php -r '$s=file_get_contents($argv[1]); preg_match("/Version:\\s+([^\\r\\n]+)/", $s, $m); echo trim($m[1] ?? "");' "$ENTRY_FILE")"
+[[ -n "$VERSION" ]] || { echo "Unable to determine plugin version." >&2; exit 1; }
+command -v rsync >/dev/null 2>&1 || { echo "rsync is required." >&2; exit 1; }
+command -v zip >/dev/null 2>&1 || { echo "zip is required." >&2; exit 1; }
+command -v php >/dev/null 2>&1 || { echo "php is required." >&2; exit 1; }
+BUILD_DIR="$ROOT_DIR/build"
+STAGE_DIR="$BUILD_DIR/$PLUGIN_SLUG"
+ZIP_PATH="$BUILD_DIR/${PLUGIN_SLUG}-${VERSION}.zip"
+rm -rf "$BUILD_DIR"
+mkdir -p "$STAGE_DIR"
+rsync -a --exclude='.git/' --exclude='.github/' --exclude='build/' --exclude='*.zip' "$ROOT_DIR/" "$STAGE_DIR/"
+find "$STAGE_DIR" -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+php "$STAGE_DIR/tools/conformance.php" >/dev/null
+( cd "$BUILD_DIR" && zip -qr "$(basename "$ZIP_PATH")" "$PLUGIN_SLUG" )
+echo "$ZIP_PATH"
