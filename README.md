@@ -2,7 +2,7 @@
 
 Core Blueprint Content Migrator is a safety-first, standalone WordPress utility for migrating registered post types and taxonomies on the same site. Core Blueprint Base is optional and adds suite registration and Governance logging when available.
 
-## v0.1.0-rc1 scope
+## v1.0.0-rc1 scope
 
 ### Post migrations
 
@@ -11,7 +11,7 @@ Core Blueprint Content Migrator is a safety-first, standalone WordPress utility 
 - Explicit source-taxonomy → target-taxonomy mapping.
 - Explicit source-meta → target-meta mapping with registered target meta suggestions.
 - Reuse the same featured-image attachment when supported.
-- Copy in configurable batches (10–200 posts per request).
+- Copy in configurable batches (10–200 posts per request) with per-item recovery checkpoints.
 - Preserve hierarchical parent relations when the target post type is hierarchical.
 - Verify copied core fields, mapped taxonomies and mapped meta.
 - Roll back only target posts and taxonomy terms created by the active migration job; existing target terms are never deleted.
@@ -33,9 +33,9 @@ Core Blueprint Content Migrator is a safety-first, standalone WordPress utility 
 
 Content Migrator does not guess data mappings. A taxonomy or custom field is skipped unless the operator maps it.
 
-The copy phase never deletes or changes source posts. RC1 never permanently deletes source content. The most destructive source action available is moving source posts to normal WordPress Trash after a successful verification.
+The copy phase never deletes or changes source posts. v1 RC1 never permanently deletes source content. The most destructive source action available is moving source posts to normal WordPress Trash after a fresh successful verification. If WordPress Trash is disabled, that action is not offered and is rejected server-side.
 
-Rollback uses internal per-job markers and refuses to delete a target whose marker no longer matches the active job.
+Rollback uses internal per-job markers, ownership/locking and conservative recovery checks. It refuses to delete a target whose recovery identity changed, and job-created terms are preserved if other content starts using them.
 
 ## Dictionary migration example
 
