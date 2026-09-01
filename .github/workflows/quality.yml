@@ -1,0 +1,25 @@
+name: Quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+      - name: PHP lint
+        run: find . -name '*.php' -not -path './build/*' -print0 | xargs -0 -n1 php -l
+      - name: Conformance
+        run: php tools/conformance.php
+      - name: Runtime safety smoke
+        run: php tests/runtime-smoke.php
+      - name: Trash-disabled safety smoke
+        run: php tests/trash-disabled-smoke.php
+      - name: Build release
+        run: bash tools/build-release
